@@ -6,14 +6,12 @@ class CaptchaGenerator
     private $black;
     private $white;
     private $colors;
-
     private $width;
     private $height;
     private $minRotation;
     private $maxRotation;
     private $charMinSize;
     private $charMaxSize;
-
     private $image;
 
     public function __construct(GeneratorConfig $config)
@@ -29,15 +27,13 @@ class CaptchaGenerator
 
     private function setFontsPathEnv($fontsPath)
     {
-        $env = getenv('GDFONTPATH');
-        if (empty($fontsPath)
-            && $env === false
-            && defined('SIMPLECAPTCHA_FONTS_PATH')
-            && is_dir(SIMPLECAPTCHA_FONTS_PATH)) {
-            putenv('GDFONTPATH=' . SIMPLECAPTCHA_FONTS_PATH);
-        } elseif (is_dir($fontsPath)) {
-            putenv('GDFONTPATH=' . $fontsPath);
-        } else if ($env === false) {
+        if (! empty($fontsPath) && is_dir($fontsPath)) {
+            return putenv('GDFONTPATH=' . $fontsPath);
+        }
+        if (getenv('GDFONTPATH') === false) {
+            if (defined('SIMPLECAPTCHA_FONTS_PATH') && is_dir(SIMPLECAPTCHA_FONTS_PATH)) {
+                return putenv('GDFONTPATH=' . SIMPLECAPTCHA_FONTS_PATH);
+            }
             throw new NoFontsPathDefinedException();
         }
     }
@@ -62,11 +58,14 @@ class CaptchaGenerator
         $charsCount = strlen($code);
         $charWidth = $this->initCharactersParamsAndGetCharWidth($code);
 
-        $charGenerator = new CharGenerator($this->charMinSize, $this->charMaxSize, $this->minRotation, $this->maxRotation);
+        $charGenerator = new CharGenerator(
+            $this->charMinSize,
+            $this->charMaxSize,
+            $this->minRotation,
+            $this->maxRotation
+        );
         // Add randomly placed and rotated characters
-        for ($index = 0; $index < $charsCount; $index++) {
-
-
+        for ($index = 0; $index < $charsCount; $index ++) {
             $charImage = $charGenerator->generate($code[$index], $charWidth, $this->height);
             imagecopymerge(
                 $this->image,
@@ -77,7 +76,8 @@ class CaptchaGenerator
                 0,
                 $charWidth,
                 imagesy($charImage),
-                rand(70, 100));
+                rand(70, 100)
+            );
             imagedestroy($charImage);
         }
     }
@@ -100,7 +100,8 @@ class CaptchaGenerator
                 $this->image,
                 0,
                 rand(0, $this->height),
-                $this->width - 1, rand(0, $this->height),
+                $this->width - 1,
+                rand(0, $this->height),
                 $this->black
             );
         }
@@ -118,13 +119,13 @@ class CaptchaGenerator
             $this->black
         );
         imageellipse(
-            $this->image, $this->width,
+            $this->image,
+            $this->width,
             $this->height * rand(0, 1),
             rand($this->width * 1 / 4, $this->width * 3 / 4),
             rand($this->height * 1 / 4, $this->height * 3 / 4),
             $this->black
         );
-
     }
 
     private function setRandomAntialias()
@@ -138,8 +139,8 @@ class CaptchaGenerator
     private function setBackgroundNoise()
     {
         // Inserts random pixels with random colors
-        for ($y = 0; $y < $this->height; $y++) {
-            for ($x = 0; $x < $this->width; $x++) {
+        for ($y = 0; $y < $this->height; $y ++) {
+            for ($x = 0; $x < $this->width; $x ++) {
                 imagesetpixel(
                     $this->image,
                     $x,
@@ -160,9 +161,13 @@ class CaptchaGenerator
     {
         $this->colors = [];
         // Three random colors
-        $this->colors[0] = imagecolorallocate($this->image, rand(0x7F, 0XFF), rand(0x7F, 0XFF), rand(0x7F, 0XFF));
-        $this->colors[1] = imagecolorallocate($this->image, rand(0x7F, 0XFF), rand(0x7F, 0XFF), rand(0x7F, 0XFF));
-        $this->colors[2] = imagecolorallocate($this->image, rand(0x7F, 0XFF), rand(0x7F, 0XFF), rand(0x7F, 0XFF));
+        for ($i = 0; $i < 3; $i++) {
+            $this->colors[$i] = imagecolorallocate(
+                $this->image,
+                rand(0x7F, 0XFF),
+                rand(0x7F, 0XFF),
+                rand(0x7F, 0XFF)
+            );
+        }
     }
 }
-

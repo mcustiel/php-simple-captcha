@@ -11,5 +11,5 @@ $captcha = new Captcha();
 $code = $captcha->getCode();
 $_SESSION['captcha-code'] = $code;
 
-$captcha->sendImageToBrowser();
+$captcha->sendImageToFile(__DIR__ . '/../tests/generated/captcha.png');
 $captcha->destroy();

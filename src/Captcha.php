@@ -15,14 +15,13 @@ class Captcha
      */
     private $image = null;
 
-    private $config;
-
     private $validAsciiRanges = array(
         array(48, 57), // Digits
         array(65, 90) // Uppercase letters
     );
 
-    public function __construct($code = null, GeneratorConfig $config = null) {
+    public function __construct($code = null, GeneratorConfig $config = null)
+    {
         $this->code = $code;
         $this->generator = new CaptchaGenerator(
             $config === null ? GeneratorConfig::create() : $config

@@ -18,11 +18,12 @@ class CharGenerator
     private $transparentColor;
     private $charColor;
 
-    public function __construct($minSize, $maxSize, $minRotation, $maxRotation) {
+    public function __construct($minSize, $maxSize, $minRotation, $maxRotation)
+    {
         $this->fontsPath = getenv('GDFONTPATH');
         $this->fontsList = array_slice(scandir($this->fontsPath), 2);
         if (count($this->fontsList) == 0) {
-            // throw exception
+            throw new NoFontsException();
         }
         $this->minRotation = $minRotation;
         $this->maxRotation = $maxRotation;
@@ -45,7 +46,8 @@ class CharGenerator
         // Random filter
         if (rand(0, 1)) {
             imagefilter(
-                $this->image, rand(0, 1) ? IMG_FILTER_GAUSSIAN_BLUR : IMG_FILTER_MEAN_REMOVAL
+                $this->image,
+                rand(0, 1) ? IMG_FILTER_GAUSSIAN_BLUR : IMG_FILTER_MEAN_REMOVAL
             );
         }
     }
@@ -56,8 +58,10 @@ class CharGenerator
             imagedestroy($this->image);
         }
         $this->image = imagecreatetruecolor($width, $height);
-        $this->transparentColor = imagecolortransparent($this->image,
-            imagecolorallocate($this->image, 255, 255, 255));
+        $this->transparentColor = imagecolortransparent(
+            $this->image,
+            imagecolorallocate($this->image, 255, 255, 255)
+        );
         imagefill($this->image, 0, 0, $this->transparentColor);
         $this->charColor = imagecolorallocate(
             $this->image,

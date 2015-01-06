@@ -96,4 +96,4 @@ class GeneratorConfig
     {
         return $this->fontsPath;
     }
- }
+}
