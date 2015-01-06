@@ -3,9 +3,10 @@ namespace Mcustiel\Captcha;
 
 class CharGenerator
 {
-    // Created inside this class
     private $minRotation;
     private $maxRotation;
+    private $minSize;
+    private $maxSize;
 
     // In constructor
     private $fontsPath;
@@ -17,7 +18,7 @@ class CharGenerator
     private $transparentColor;
     private $charColor;
 
-    public function __construct($minRotation, $maxRotation) {
+    public function __construct($minSize, $maxSize, $minRotation, $maxRotation) {
         $this->fontsPath = getenv('GDFONTPATH');
         $this->fontsList = array_slice(scandir($this->fontsPath), 2);
         if (count($this->fontsList) == 0) {
@@ -25,6 +26,8 @@ class CharGenerator
         }
         $this->minRotation = $minRotation;
         $this->maxRotation = $maxRotation;
+        $this->minSize = $minSize;
+        $this->maxSize = $maxSize;
     }
 
     public function generate($char, $width, $height)
@@ -64,32 +67,23 @@ class CharGenerator
         );
     }
 
-
     private function drawCharacter($char, $width, $height)
     {
         // Rotation with angle and durection
         $rotationAngle = abs(rand($this->minRotation, $this->maxRotation) - (rand(0, 1) ? 360 : 0));
+        $size = rand($this->minSize, $this->maxSize);
 
         imagettftext(
             $this->image,
-            $height,
+            $size,
             $rotationAngle,
-            1,
-            $height - 1,
+            rand(floor($width / 8), floor($width / 4)),
+            rand(floor($height * 3 / 4), floor($height * 6 / 7)),
             $this->charColor,
             $this->fontsList[rand(0, count($this->fontsList) - 1)],
             $char
         );
-        //$this->rotate($rotationAngle);
     }
-
-    private function rotate($rotationAngle)
-    {
-        $rotated = imagerotate($this->image, $rotationAngle, $this->transparentColor, 1);
-        imagedestroy($this->image);
-        $this->image = $rotated;
-    }
-
 
     private function setRandomAntialias()
     {

@@ -7,50 +7,42 @@ class CaptchaGenerator
     private $white;
     private $colors;
 
-    private $width = 200;
-    private $height = 50;
-    private $minRotation = 1;
-    private $maxRotation = 15;
-    private $charMinHeight = 24;
-    private $charMaxHeight = 36;
+    private $width;
+    private $height;
+    private $minRotation;
+    private $maxRotation;
+    private $charMinSize;
+    private $charMaxSize;
 
-    private $charsCount;
-    private $code;
     private $image;
 
-    public function __construct(
-        $code, $width = 200, $height = 50, $minRotation = 1,
-        $maxRotation = 15, $charMinHeight = 20, $charMaxHeight = 32,
-        $fontsPath = null
-    ) {
-        $this->setFontsPathEnv($fontsPath);
-        $this->width = $width;
-        $this->height = $height;
-        $this->charsCount = strlen($code);
-        $this->code = $code;
-        $this->minRotation = $minRotation;
-        $this->maxRotation = $maxRotation;
-        $this->charMinHeight = $charMinHeight;
-        $this->charMaxHeight = $charMaxHeight;
+    public function __construct(GeneratorConfig $config)
+    {
+        $this->setFontsPathEnv($config->getFontsPath());
+        $this->width = $config->getWidth();
+        $this->height = $config->getHeight();
+        $this->minRotation = $config->getMinCharacterRotation();
+        $this->maxRotation = $config->getMaxCharacterRotation();
+        $this->charMinSize = $config->getMinCharacterSize();
+        $this->charMaxSize = $config->getMaxCharacterSize();
     }
 
     private function setFontsPathEnv($fontsPath)
     {
-        if (getenv('GDFONTPATH') === false) {
-            if (defined('SIMPLECAPTCHA_FONTS_PATH')) {
-                $path = realpath(SIMPLECAPTCHA_FONTS_PATH);
-            } elseif (!empty($fontsPath)) {
-                $path = $fontsPath;
-            }
-            if (is_dir($path)) {
-                putenv('GDFONTPATH=' . $path);
-            } else {
-                // throw exception;
-            }
+        $env = getenv('GDFONTPATH');
+        if (empty($fontsPath)
+            && $env === false
+            && defined('SIMPLECAPTCHA_FONTS_PATH')
+            && is_dir(SIMPLECAPTCHA_FONTS_PATH)) {
+            putenv('GDFONTPATH=' . SIMPLECAPTCHA_FONTS_PATH);
+        } elseif (is_dir($fontsPath)) {
+            putenv('GDFONTPATH=' . $fontsPath);
+        } else if ($env === false) {
+            throw new NoFontsPathDefinedException();
         }
     }
 
-    public function generate()
+    public function generate($code)
     {
         $this->image = imagecreatetruecolor($this->width, $this->height);
         $this->initBasicColors();
@@ -60,26 +52,27 @@ class CaptchaGenerator
 
         $this->drawEllipses();
         $this->drawLines();
-        $this->drawCharacters();
+        $this->drawCharacters($code);
 
         return $this->image;
     }
 
-    private function drawCharacters()
+    private function drawCharacters($code)
     {
-        $charWidth = $this->initCharactersParamsAndGetCharWidth();
+        $charsCount = strlen($code);
+        $charWidth = $this->initCharactersParamsAndGetCharWidth($code);
 
-        $charGenerator = new CharGenerator($this->minRotation, $this->maxRotation);
-        // Ingreso caracteres rotados de forma aleatoria
-        for ($index = 0; $index < $this->charsCount; $index++) {
-            $charHeight = rand($this->charMinHeight, $this->charMaxHeight);
+        $charGenerator = new CharGenerator($this->charMinSize, $this->charMaxSize, $this->minRotation, $this->maxRotation);
+        // Add randomly placed and rotated characters
+        for ($index = 0; $index < $charsCount; $index++) {
 
-            $charImage = $charGenerator->generate($this->code[$index], $charWidth, $charHeight);
+
+            $charImage = $charGenerator->generate($code[$index], $charWidth, $this->height);
             imagecopymerge(
                 $this->image,
                 $charImage,
                 $index * $charWidth,
-                rand(0, $this->height - $charHeight),
+                0,
                 0,
                 0,
                 $charWidth,
@@ -87,20 +80,20 @@ class CaptchaGenerator
                 rand(70, 100));
             imagedestroy($charImage);
         }
-
     }
 
-    private function initCharactersParamsAndGetCharWidth()
+    private function initCharactersParamsAndGetCharWidth($code)
     {
         // Stablish line thickness for chars and width of characters
         // (with 2 pixel separation between them)
+        $charsCount = strlen($code);
         imagesetthickness($this->image, 1);
-        return floor(($this->width - $this->charsCount * 2) / $this->charsCount);
+        return floor(($this->width - $charsCount * 2) / $charsCount);
     }
 
     private function drawLines()
     {
-        // Creo líneas de ancho, posición y dirección aleatorios
+        // Add 2 lines with random thickness, position and direction.
         for ($i = 0; $i < 2; $i ++) {
             imagesetthickness($this->image, rand(1, 2));
             imageline(
