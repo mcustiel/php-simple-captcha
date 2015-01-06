@@ -1,0 +1,19 @@
+{
+	"keywords" : [
+		"captcha",
+		"simple",
+		"minimalist"
+	],
+	"autoload" : {
+		"psr-4" : {
+			"Mcustiel\\Captcha\\" : "src"
+		}
+	},
+	"name" : "Mcustiel/php-simple-captcha",
+	"type" : "library",
+	"description" : "A minimalist library that generates random captcha texts",
+	"license" : "LGPL-3.0+",
+	"require" : {
+		"php" : ">=5.5"
+	}
+}
